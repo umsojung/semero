@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="survey">
+	<insert id="add" parameterType="survo">
+		insert into survey values(survey_seq.nextVal,#{sub},#{code},sysdate)
+	</insert>
+	<delete id="sc" parameterType="int">
+		delete from surveycontent where subcode=#{subcode}
+	</delete>
+	<delete id="s" parameterType="int">
+		delete from survey where num=#{num}
+	</delete>
+	<insert id="addcontent" parameterType="java.util.List">
+	<selectKey keyProperty="id" resultType="int" order="BEFORE">
+		<!-- survey_seq.currVal 현재 시퀀스 값을 리턴하는 쿼리. -->
+		select survey_seq.currVal FROM DUAL
+	</selectKey>
+	<foreach collection="list" item="e" separator=" " open="insert all" close="SELECT * FROM DUAL">
+		into surveycontent values('${e.surveytype}',#{id},'${e.surveytitle}',0)
+	</foreach>	
+	</insert>
+<!-- <foreach> -> 다이나믹쿼리를 쓰기 위해서 <foreach>을 사용했고 open과 close가있어야 하며 아래 내용은 오라클디벨로퍼에서 작성한것이다 비교해보자. -->
+	<update id="update1" parameterType="surview2">
+		update surveycontent set surveycnt = surveycnt +1 where subcode=#{subcode} and surveytype=#{surveytype}
+	</update>
+<!-- 
+insert all
+into surveycontent values('A',5,'예',0)
+into surveycontent values('B',5,'아니요',0)
+into surveycontent values('C',5,'점심',0)
+select * from dual;
+ -->
+<select id="adminList" resultType="survo">
+	<!-- select num,sub,code,sdate from survey order by num desc -->
+	select s.num, s.sub, s.sdate, s.code, c.total
+from survey s, (select sum(surveycnt) total, subcode from surveycontent group by subcode) c where s.num=c.subcode
+</select>
+
+<select id="adminDetail" parameterType="int" resultType="surview2">
+	select s.num, s.sub, s.code, s.sdate, sc.surveytype, sc.subcode, sc.surveytitle, sc.surveycnt 
+	from survey s, surveycontent sc where s.num=${num} and s.num=sc.subcode
+</select>
+
+<select id="surveyclient" resultType="surview2">
+select s.num num, s.sub sub, s.code code ,s.sdate sdate, sc.surveytype surveytype, sc.subcode subcode ,sc.surveytitle surveytitle, sc.surveycnt surveycnt from survey s, surveycontent sc
+where s.num=sc.subcode and s.num = (select max(num) from survey)
+</select>
+</mapper>

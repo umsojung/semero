@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">	
+<context:annotation-config/>
+
+<!-- DataSoorce 설정 (이 클래스가 하는 역할은 데이터소스 설정이며  커텍션 풀에서 (톰캣:사용자와 DB사이의 중간 다리 역할을 한다.) 
+하나의 커넥션을 가져와  context.xml과 연결해 DB를 불러오기(접속하기)위한 방법. ) -->
+<bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+<property name="jndiName" value="java:comp/env/jdbc/myoracle"/>
+</bean>
+
+<!-- Transaction 설정 AOP -->
+<bean id="tm" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	<property name="dataSource" ref="dataSource"></property>
+</bean>
+<tx:annotation-driven transaction-manager="tm"/>
+	
+<!-- MaBatis 설정 ***** -->
+<bean id="factoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+	<property name="dataSource" ref="dataSource"/>
+	<property name="configLocation" value="classpath:kr/co/ikosmo/mvc/config/config.xml"/>
+	<property name="mapperLocations" value="classpath*:kr/co/ikosmo/mvc/mapper/*.xml"/>
+</bean>
+<!-- SqlSessionTemplate 설정 -->
+<bean id="ss" class="org.mybatis.spring.SqlSessionTemplate">
+<constructor-arg ref="factoryBean"/>
+</bean>
+
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/views/"/>
+		<property name="suffix" value=".jsp"/>
+		<property name="order" value="1"></property>
+	</bean>
+
+</beans>
